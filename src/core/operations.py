@@ -8,6 +8,7 @@ assembly are encapsulated here.
 This is the "deep module" that hides pipeline internals from all adapters.
 """
 
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -327,6 +328,129 @@ class SEOOperations:
                 data={"urls_count": len(urls), "engines_ok": sum(1 for r in results if r.success)},
                 elapsed_seconds=time.time() - start,
             )
+
+    # ─── Content & Crawl operations ──────────────────────────────────
+
+    def content_brief(self, topic: str, content_type: str = "blog", language: str = "en") -> OperationResult:
+        """Generate SEO content brief."""
+        start = time.time()
+        from ..modules.architect.generator import ProgrammaticGenerator
+
+        # Build a content brief from topic analysis
+        brief = {
+            "topic": topic,
+            "content_type": content_type,
+            "language": language,
+            "suggested_title": f"{topic} — Complete Guide ({time.strftime('%Y')})",
+            "meta_description": f"Everything you need to know about {topic}. Comprehensive guide with actionable tips.",
+            "target_word_count": {"blog": 1500, "guide": 2500, "landing": 800, "faq": 1200, "product": 600, "comparison": 2000}.get(content_type, 1500),
+            "suggested_h2s": [
+                f"What is {topic}?",
+                f"How {topic} Works",
+                f"Benefits of {topic}",
+                f"Best Practices for {topic}",
+                f"{topic} vs Alternatives",
+                "Frequently Asked Questions",
+            ],
+            "schema_recommendation": {"blog": "Article", "faq": "FAQPage", "product": "Product", "guide": "HowTo", "comparison": "WebPage", "landing": "WebPage"}.get(content_type, "Article"),
+            "internal_link_suggestions": [
+                {"anchor": "related features", "target": "/features"},
+                {"anchor": "pricing", "target": "/pricing"},
+                {"anchor": "get started", "target": "/signup"},
+            ],
+        }
+
+        return OperationResult(
+            success=True, url=topic, operation="content_brief",
+            data=brief, elapsed_seconds=time.time() - start,
+        )
+
+    def programmatic_pages(self, page_type: str, brand_name: str, data: list, languages: list = None) -> OperationResult:
+        """Generate programmatic page specs."""
+        start = time.time()
+        from ..modules.architect.generator import ProgrammaticGenerator
+
+        gen_config = {
+            "brand_name": brand_name,
+            "base_url": self.config.get("targets", {}).get("primary_domain", ""),
+            "languages": languages or self.config.get("targets", {}).get("languages", ["en"]),
+        }
+        gen = ProgrammaticGenerator(gen_config)
+
+        if page_type == "city":
+            pages = gen.generate_city_pages(data)
+        elif page_type == "comparison":
+            pages = gen.generate_comparison_pages(data)
+        elif page_type == "usecase":
+            pages = gen.generate_usecase_pages(data)
+        else:
+            pages = gen.generate_city_pages(data)
+
+        return OperationResult(
+            success=True, url=brand_name, operation="programmatic_pages",
+            data={"page_type": page_type, "count": len(pages), "specs": [p.to_dict() for p in pages[:20]]},
+            elapsed_seconds=time.time() - start,
+        )
+
+    def crawl_site(self, url: str, max_pages: int = 50, max_depth: int = 3) -> OperationResult:
+        """Crawl a site with persistent frontier."""
+        start = time.time()
+        from .crawler import SiteCrawler
+
+        crawler = SiteCrawler(url, max_pages=max_pages, max_depth=max_depth)
+        pages = []
+        for page in crawler.crawl():
+            pages.append(page.to_dict())
+
+        stats = crawler.get_stats()
+        crawler.close()
+
+        return OperationResult(
+            success=True, url=url, operation="crawl_site",
+            data={"stats": stats, "pages": pages[:100]},
+            elapsed_seconds=time.time() - start,
+        )
+
+    def pagespeed(self, url: str, strategy: str = "mobile") -> OperationResult:
+        """Run PageSpeed Insights."""
+        start = time.time()
+        from ..integrations.pagespeed import PageSpeedClient
+
+        api_key = os.environ.get("PAGESPEED_API_KEY", "")
+        client = PageSpeedClient(api_key=api_key)
+        result = client.analyze(url, strategy=strategy)
+
+        return OperationResult(
+            success=result.success, url=url, operation="pagespeed",
+            score=result.performance_score,
+            data=result.to_dict(),
+            errors=[result.error] if result.error else [],
+            elapsed_seconds=time.time() - start,
+        )
+
+    def report_html(self, url: str) -> OperationResult:
+        """Generate HTML report for a URL."""
+        start = time.time()
+
+        # First run audit
+        audit_result = self.audit(url)
+
+        # Generate HTML
+        from .report import generate_html_report, save_report
+        html = generate_html_report(
+            url=url,
+            score=audit_result.score,
+            issues=audit_result.issues,
+            data=audit_result.data,
+        )
+        path = save_report(html)
+
+        return OperationResult(
+            success=True, url=url, operation="report_html",
+            score=audit_result.score,
+            data={"report_path": path, "issues_count": len(audit_result.issues)},
+            elapsed_seconds=time.time() - start,
+        )
 
     # ─── Private: pipeline construction ────────────────────────────────
 

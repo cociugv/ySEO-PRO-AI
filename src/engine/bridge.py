@@ -43,6 +43,11 @@ def main():
             a["domain"], a.get("keywords", a.get("niche_keywords", []))
         ),
         "indexnow_ping": lambda a: ops.indexnow_ping(a.get("urls", []), a.get("key", "")),
+        "content_brief": lambda a: ops.content_brief(a["topic"], a.get("content_type", "blog"), a.get("language", "en")),
+        "programmatic_pages": lambda a: ops.programmatic_pages(a["page_type"], a["brand_name"], a.get("data", []), a.get("languages")),
+        "crawl_site": lambda a: ops.crawl_site(a["url"], a.get("max_pages", 50), a.get("max_depth", 3)),
+        "pagespeed": lambda a: ops.pagespeed(a["url"], a.get("strategy", "mobile")),
+        "report_html": lambda a: ops.report_html(a["url"]),
     }
 
     handler = handlers.get(command)

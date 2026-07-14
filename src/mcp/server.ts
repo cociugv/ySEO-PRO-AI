@@ -20,6 +20,8 @@ import { registerAnalyzeTools } from "./tools/analyze.js";
 import { registerMonitorTools } from "./tools/monitor.js";
 import { registerCompetitorTools } from "./tools/competitor.js";
 import { registerPublishTools } from "./tools/publish.js";
+import { registerContentTools } from "./tools/content.js";
+import { registerCrawlTools } from "./tools/crawl.js";
 
 const server = new McpServer({
   name: "yseo-pro-ai",
@@ -33,11 +35,13 @@ registerAnalyzeTools(server);     // seo_score_ai_readiness
 registerMonitorTools(server);     // seo_monitor_baseline, seo_monitor_compare
 registerCompetitorTools(server);  // seo_competitor_compare, seo_backlink_opportunities
 registerPublishTools(server);     // seo_indexnow_ping
+registerContentTools(server);     // seo_content_brief, seo_programmatic_pages
+registerCrawlTools(server);       // seo_crawl_site, seo_pagespeed
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("ySEO-PRO-AI MCP server running (11 tools)");
+  console.error("ySEO-PRO-AI MCP server running (15 tools)");
 }
 
 main().catch((error) => {
