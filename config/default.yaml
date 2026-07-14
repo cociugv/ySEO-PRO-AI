@@ -1,0 +1,104 @@
+# ySEO-PRO-AI — Default Configuration
+# Author: Vadim Cociug / yLink.pro
+# Override with: config/local.yaml (gitignored)
+
+platform:
+  name: "ySEO-PRO-AI"
+  version: "1.0.0"
+  author: "Vadim Cociug"
+  website: "https://ylink.pro"
+
+pipeline:
+  # Default pipeline stages (Scan → Diagnose → Fix → Verify → Report)
+  stages:
+    - scan
+    - diagnose
+    - fix
+    - verify
+    - report
+  parallel_workers: 4
+  timeout_seconds: 120
+  retry_attempts: 2
+
+targets:
+  # Primary site configuration
+  primary_domain: "ylink.pro"
+  languages:
+    - en
+    - ro
+    - ru
+    - de
+    - es
+    - fr
+    - hi
+    - id
+    - it
+    - "no"
+    - pt
+    - tr
+    - uk
+  default_language: "en"
+
+modules:
+  inspector:
+    enabled: true
+    depth: 3
+    max_pages: 500
+    user_agent: "ySEO-PRO-AI/1.0 (+https://ylink.pro/bot)"
+  doctor:
+    enabled: true
+    auto_fix: true
+    backup_before_fix: true
+    dry_run: false
+  sentinel:
+    enabled: true
+    snapshot_interval_hours: 24
+    alert_threshold: "warning"
+  polyglot:
+    enabled: true
+    hreflang_validation: true
+    locale_detection: true
+  architect:
+    enabled: true
+    programmatic_templates: true
+    city_pages: true
+    comparison_pages: true
+  publisher:
+    enabled: true
+    blog_api: "https://ylink.pro/blog-api.php"
+    indexnow_key: ""
+    auto_publish: false
+  radar:
+    enabled: true
+    competitors: []
+    track_serp: true
+    track_backlinks: true
+  citadel:
+    enabled: true
+    schema_auto_inject: true
+    ai_readiness_score: true
+
+reporting:
+  format: "html"  # html | json | markdown | all
+  output_dir: "reports"
+  include_screenshots: true
+  score_weights:
+    technical: 0.25
+    content: 0.20
+    multilingual: 0.15
+    performance: 0.15
+    authority: 0.15
+    ai_readiness: 0.10
+
+integrations:
+  google_search_console:
+    enabled: false
+    credentials_path: ""
+  indexnow:
+    enabled: true
+    key: ""
+    endpoint: "https://api.indexnow.org/indexnow"
+  search_engines:
+    - google
+    - bing
+    - yandex

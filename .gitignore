@@ -1,0 +1,21 @@
+# ySEO-PRO-AI .gitignore
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+node_modules/
+reports/*.json
+reports/*.html
+.yseo/cache/
+.yseo/snapshots/
+*.log
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
