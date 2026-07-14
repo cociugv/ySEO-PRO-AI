@@ -1,0 +1,70 @@
+{
+  "name": "yseo-pro-ai",
+  "version": "1.0.0",
+  "description": "AI-powered SEO automation that audits, fixes, and grows organic traffic. MCP server + CLI + Agent skills for Claude, Cursor, Codex, and Gemini.",
+  "author": "Vadim Cociug <vadim@ylink.pro>",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/mcp/server.js",
+  "bin": {
+    "yseo": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/mcp/server.ts",
+    "start": "node dist/mcp/server.ts",
+    "cli": "tsx src/cli/index.ts",
+    "test": "python test_quick.py && python test_agents.py",
+    "lint": "eslint src/",
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "seo",
+    "mcp",
+    "mcp-server",
+    "ai-seo",
+    "seo-automation",
+    "seo-audit",
+    "technical-seo",
+    "hreflang",
+    "schema-markup",
+    "indexnow",
+    "core-web-vitals",
+    "ai-search",
+    "geo",
+    "aeo",
+    "multilingual-seo",
+    "programmatic-seo",
+    "claude",
+    "cursor",
+    "codex"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vadimc/ySEO-PRO-AI"
+  },
+  "homepage": "https://ylink.pro/yseo",
+  "bugs": {
+    "url": "https://github.com/vadimc/ySEO-PRO-AI/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "eslint": "^9.0.0"
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "config/",
+    "README.md",
+    "LICENSE"
+  ]
+}

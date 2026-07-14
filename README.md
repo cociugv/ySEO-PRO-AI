@@ -1,217 +1,235 @@
 # ySEO-PRO-AI
 
-**AI-powered SEO automation that audits, fixes, and grows your organic traffic.**
-Built for multilingual SaaS by [Vadim Cociug](https://ylink.pro).
+**The open-source SEO automation platform that doesn't just audit — it fixes.**
+
+40+ MCP tools for technical SEO, content optimization, multilingual intelligence, drift monitoring, AI search readiness, and programmatic page generation. Works with Claude, Cursor, Codex, Gemini, Windsurf, and any MCP client.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
-[![Platform](https://img.shields.io/badge/Platform-Kiro%20%7C%20Claude%20Code%20%7C%20Cursor-purple.svg)](#compatibility)
+[![MCP Compatible](https://img.shields.io/badge/MCP-1.0-blue.svg)](https://modelcontextprotocol.io)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 
 ---
 
-## What Makes ySEO-PRO-AI Different
+## Why ySEO-PRO-AI?
 
-| Feature | Typical SEO Tools | ySEO-PRO-AI |
-|---------|-------------------|-------------|
-| Audit | Report problems | **Audit + Auto-Fix** |
-| Multilingual | Basic hreflang check | **14-language intelligence** |
-| Content | Manual publishing | **Auto-publish + IndexNow ping** |
-| Monitoring | Manual checks | **Continuous drift alerts** |
-| AI Search | Not covered | **AI Readiness Score** |
-| Programmatic | Not covered | **City/comparison page generator** |
-| Competitors | Manual research | **Automated tracking** |
+| | Traditional SEO Tools | Audit-Only MCP Servers | **ySEO-PRO-AI** |
+|--|----------------------|------------------------|-----------------|
+| Audit | Reports in dashboard | Lists issues | Finds issues |
+| Fix | Manual work | Manual work | **Auto-fixes** |
+| AI Search | Not covered | Basic | **AI Readiness Score** |
+| Multilingual | Basic hreflang check | Not covered | **14-language intelligence** |
+| Monitoring | Separate tool | Not covered | **Built-in drift alerts** |
+| Programmatic | Not covered | Not covered | **City/vs/usecase generator** |
+| Indexing | Manual submission | Not covered | **IndexNow auto-ping** |
+| Cost | $100-500/month | Free (limited) | **Free + extensible** |
+
+---
+
+## Quick Start
+
+### Install as MCP Server (Claude / Cursor / Windsurf)
+
+```json
+{
+  "mcpServers": {
+    "yseo-pro-ai": {
+      "command": "npx",
+      "args": ["-y", "yseo-pro-ai"]
+    }
+  }
+}
+```
+
+### Install from Source
+
+```bash
+git clone https://github.com/vadimc/ySEO-PRO-AI.git
+cd ySEO-PRO-AI
+npm install
+```
+
+Then ask your AI assistant: *"Audit https://example.com for SEO issues and fix them"*
+
+---
+
+## 40+ SEO Tools
+
+### Audit & Fix
+- `seo_audit_page` — Full page audit (30+ checks)
+- `seo_audit_site` — Crawl and audit entire site
+- `seo_fix_auto` — **Auto-fix all fixable issues**
+- `seo_fix_meta` — Generate optimized meta tags
+- `seo_fix_schema` — Auto-inject schema markup
+- `seo_fix_robots` — Generate robots.txt
+- `seo_fix_sitemap` — Generate XML sitemap
+- `seo_fix_hreflang` — Generate hreflang tags
+
+### AI & Content
+- `seo_score_ai_readiness` — AI Search Readiness (0-100)
+- `seo_content_brief` — SEO content briefs
+- `seo_content_optimize` — Optimize existing content
+- `seo_programmatic_pages` — Generate pages at scale
+
+### Monitoring & Intelligence
+- `seo_monitor_baseline` — Capture SEO snapshot
+- `seo_monitor_compare` — Detect regressions
+- `seo_competitor_compare` — Compare vs competitors
+- `seo_backlink_opportunities` — Find link targets
+
+### Publishing & Indexing
+- `seo_indexnow_ping` — Instant index notification
+- `seo_publish_post` — Auto-publish + ping
+- `seo_sitemap_submit` — Submit to search engines
+
+[See all 40+ tools →](docs/TOOLS.md)
 
 ---
 
 ## Architecture
 
 ```
-ySEO-PRO-AI/
-├── src/
-│   ├── core/                    # Engine + Pipeline + Parser + Fetcher
-│   │   ├── pipeline.py          # 5-stage pipeline (Scan→Diagnose→Fix→Verify→Report)
-│   │   ├── fetcher.py           # HTTP fetcher with cache + rate limiting
-│   │   ├── parser.py            # HTML parser (stdlib only, no BS4)
-│   │   └── config_loader.py     # YAML config with env var expansion
-│   ├── modules/
-│   │   ├── inspector/           # Technical SEO scanner (crawl, index, speed, security)
-│   │   ├── doctor/              # Auto-fix engine (generates fixes, not just reports)
-│   │   ├── sentinel/            # SEO drift monitoring & alerts
-│   │   ├── polyglot/            # Multilingual SEO (hreflang audit + generation)
-│   │   ├── architect/           # Programmatic page generator (city, vs, usecase)
-│   │   ├── publisher/           # Blog auto-publish + IndexNow instant indexing
-│   │   ├── radar/               # Competitor intelligence + backlink opportunities
-│   │   └── citadel/             # Schema auto-injection + AI Search Readiness Score
-│   ├── ops/                     # CLI operations
-│   ├── crew/                    # AI agent definitions
-│   ├── plugins/                 # Plugin system (auto-discovery)
-│   └── templates/               # Report templates
-├── config/                      # Configuration files
-├── reports/                     # Generated reports (gitignored)
-├── .yseo/                       # Runtime data (cache, snapshots)
-└── .kiro/steering/              # Kiro CLI integration
+┌─────────────────────────────────────────────────────────┐
+│                    MCP Clients                           │
+│  Claude Desktop · Cursor · Codex · Gemini · Windsurf    │
+└────────────────────────┬────────────────────────────────┘
+                         │ stdio (MCP Protocol)
+┌────────────────────────▼────────────────────────────────┐
+│              TypeScript MCP Server                       │
+│         40+ tools · Zod validation · Resources          │
+└────────────────────────┬────────────────────────────────┘
+                         │ subprocess bridge
+┌────────────────────────▼────────────────────────────────┐
+│              Python Analysis Engine                      │
+│                                                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │Inspector │ │ Doctor   │ │Polyglot  │ │Sentinel  │  │
+│  │(audit)   │ │(auto-fix)│ │(i18n)    │ │(drift)   │  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │Architect │ │Publisher │ │ Radar    │ │Citadel   │  │
+│  │(pages)   │ │(publish) │ │(compete) │ │(schema)  │  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
+│                                                         │
+│  Pipeline: SCAN → DIAGNOSE → FIX → VERIFY → REPORT     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Design Principles
+
+1. **Fix, don't just audit** — Every diagnosed issue has an auto-fix path
+2. **MCP-native** — First-class MCP server, works with any compatible client
+3. **Zero-config start** — Works out of the box, configure only what you need
+4. **Multilingual by default** — Built for international sites (14+ languages)
+5. **AI-search aware** — Optimizes for Google AI Overviews, ChatGPT, Perplexity
+6. **Plugin-extensible** — Add custom tools, integrations, and data sources
+7. **Privacy-first** — Runs locally, no data sent to third parties
+
+---
+
+## Platform Compatibility
+
+| Platform | Integration | Setup |
+|----------|-------------|-------|
+| **Claude Desktop** | MCP server (stdio) | Add to mcp.json |
+| **Claude Code** | MCP + Skills + Agents | Plugin auto-discovery |
+| **Cursor** | MCP server | Add to .cursor/mcp.json |
+| **Kiro CLI** | Steering rules + MCP | Open project in Kiro |
+| **Windsurf** | MCP server | Add to configuration |
+| **Codex CLI** | Python CLI | `python -m src.ops.cli` |
+| **Gemini Code Assist** | Python CLI | Direct execution |
+| **n8n / Zapier** | HTTP bridge | Via MCP HTTP transport |
+| **Any MCP client** | stdio transport | Standard MCP protocol |
+
+---
+
+## CLI Usage
+
+```bash
+# Quick page scan
+python -m src.ops.cli scan https://example.com
+
+# Full audit with all modules
+python -m src.ops.cli audit https://example.com
+
+# Auto-fix (preview)
+python -m src.ops.cli fix https://example.com --dry-run
+
+# Auto-fix (apply)
+python -m src.ops.cli fix https://example.com
+
+# AI Search Readiness Score
+python -m src.ops.cli ai-score https://example.com
 ```
 
 ---
 
-## Quick Start
+## Configuration
 
-### Installation
+Edit `config/default.yaml`:
 
-```bash
-git clone https://github.com/YOUR-USERNAME/ySEO-PRO-AI.git
-cd ySEO-PRO-AI
-cp config/.env.example .env
-# Edit .env with your API keys
+```yaml
+targets:
+  primary_domain: "example.com"
+  languages: [en, de, fr, es, ro]
+
+modules:
+  doctor:
+    auto_fix: true
+    dry_run: false
+  sentinel:
+    snapshot_interval_hours: 24
+  publisher:
+    indexnow_key: "your-key"
 ```
 
-**Requirements:** Python 3.10+ (standard library only — no pip install needed for core features)
-
-### Basic Usage
-
-```bash
-# Quick scan
-python -m src.ops.cli scan https://ylink.pro
-
-# Full audit with issue detection
-python -m src.ops.cli audit https://ylink.pro
-
-# Auto-fix detected issues (dry run)
-python -m src.ops.cli fix https://ylink.pro --dry-run
-
-# Auto-fix for real
-python -m src.ops.cli fix https://ylink.pro
-
-# AI Search Readiness Score
-python -m src.ops.cli ai-score https://ylink.pro
+Environment variables (`.env`):
+```
+INDEXNOW_KEY=your-key
+PAGESPEED_API_KEY=optional
+GSC_CREDENTIALS_JSON=optional
 ```
 
 ---
 
 ## Modules
 
-### INSPECTOR — Technical SEO Scanner
-Crawls your site and detects 30+ technical SEO issues across categories:
-- HTTP status, redirects, TTFB
-- Title, meta description, H1 validation
-- Canonical, viewport, robots
-- HTTPS, security headers
-- Structured data presence
-- Content length (thin content detection)
-
-### DOCTOR — Auto-Fix Engine
-**Not just auditing — fixing.** For every fixable issue, Doctor generates:
-- Missing meta tags (title, description)
-- robots.txt content
-- XML sitemaps
-- Schema.org markup (JSON-LD)
-- Canonical tags
-- Hreflang tags for all configured languages
-
-### POLYGLOT — Multilingual SEO Intelligence
-Built for sites like yLink.pro with 14 languages:
-- Hreflang audit (validates all tags)
-- Missing language detection
-- x-default validation
-- Return tag verification (bidirectional)
-- URL strategy detection (subdirectory/subdomain/ccTLD)
-- Locale-content consistency
-
-### SENTINEL — SEO Drift Monitoring
-Takes snapshots and alerts on regressions:
-- Title/description changes
-- noindex additions (CRITICAL alert)
-- Canonical changes
-- Status code changes
-- Content reduction (> 20% word drop)
-- Response time degradation
-- Hreflang/schema count changes
-
-### ARCHITECT — Programmatic SEO Generator
-Creates pages at scale:
-- **City pages** — "URL Shortener in Berlin/Paris/Tokyo"
-- **Comparison pages** — "yLink vs Bitly"
-- **Use case pages** — "URL Shortener for Social Media"
-- **Multilingual generation** — All pages in 14 languages
-
-### PUBLISHER — Auto-Publish + IndexNow
-- Publishes to blog API (yLink.pro, WordPress, custom)
-- Pings IndexNow immediately after publish
-- Supports batch URL submission (up to 10,000 URLs)
-- Notifies all engines: Bing, Yandex, Seznam, Naver
-
-### RADAR — Competitor Intelligence
-- Scan competitor SEO profiles
-- Side-by-side metric comparison
-- Backlink opportunity finder (directories, guest posts)
-- Weekly outreach plan generation
-
-### CITADEL — Schema + AI Readiness
-- Auto-detects page type (article, product, FAQ, service, software)
-- Generates appropriate schema markup
-- **AI Search Readiness Score** (0-100) measuring:
-  - Citability
-  - Entity presence
-  - Answer clarity
-  - Content structure
-  - Authority signals
-  - Freshness
+| Module | Purpose | Key Feature |
+|--------|---------|-------------|
+| **Inspector** | Technical SEO scanner | 30+ diagnostic checks |
+| **Doctor** | Auto-fix engine | Generates fixes, not just reports |
+| **Polyglot** | Multilingual SEO | Hreflang audit + generation |
+| **Sentinel** | Drift monitoring | Snapshot comparison + alerts |
+| **Architect** | Programmatic SEO | City/comparison/usecase pages |
+| **Publisher** | Content publishing | Blog API + IndexNow ping |
+| **Radar** | Competitor intel | Compare + backlink opportunities |
+| **Citadel** | Schema + AI readiness | Auto-inject + scoring |
 
 ---
 
-## Pipeline Philosophy
+## Contributing
 
-Every operation flows through 5 stages:
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-```
-SCAN → DIAGNOSE → FIX → VERIFY → REPORT
-```
-
-1. **SCAN** — Fetch pages, parse HTML, collect raw data
-2. **DIAGNOSE** — Analyze data, identify issues with severity levels
-3. **FIX** — Auto-remediate fixable issues (with backup + dry-run)
-4. **VERIFY** — Confirm fixes were applied correctly
-5. **REPORT** — Generate actionable output (HTML/JSON/Markdown)
-
-Modules register handlers for one or more stages. The pipeline orchestrates execution.
-
----
-
-## Compatibility
-
-| Tool | Status | Integration |
-|------|--------|-------------|
-| **Kiro CLI** | Full | `.kiro/steering/` rules |
-| **Claude Code** | Full | Agents + Skills pattern |
-| **Cursor** | Full | Custom commands |
-| **VS Code** | Partial | Terminal-based |
-| **CLI** | Full | `python -m src.ops.cli` |
-
----
-
-## Configuration
-
-Edit `config/default.yaml` for global settings. Create `config/local.yaml` for overrides (gitignored).
-
-Key settings:
-- `targets.languages` — Your site's language list
-- `modules.doctor.auto_fix` — Enable/disable auto-fixing
-- `modules.doctor.dry_run` — Preview fixes without applying
-- `integrations.indexnow.key` — Your IndexNow API key
-
-Environment variables (`YSEO_*` prefix) override config file values.
+Key areas:
+- New MCP tools
+- Additional fix prescriptions
+- Integration plugins (Ahrefs, Semrush, etc.)
+- Translations for multilingual content templates
+- Documentation improvements
 
 ---
 
 ## License
 
-MIT License — Vadim Cociug / [yLink.pro](https://ylink.pro)
+MIT License — [Vadim Cociug](https://github.com/vadimc)
 
 ---
 
-## Author
+## Links
 
-**Vadim Cociug**
-- Website: [ylink.pro](https://ylink.pro)
-- Project: ySEO-PRO-AI
-- Focus: Multilingual SaaS SEO automation
+- [Documentation](docs/)
+- [Installation Guide](docs/INSTALLATION.md)
+- [Tools Reference](docs/TOOLS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Plugin Development](docs/PLUGINS.md)

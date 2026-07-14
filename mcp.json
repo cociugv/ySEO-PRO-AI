@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "yseo-pro-ai": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "env": {},
+      "disabled": false
+    }
+  }
+}

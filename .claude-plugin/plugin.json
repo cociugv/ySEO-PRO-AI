@@ -1,0 +1,10 @@
+{
+  "name": "yseo-pro-ai",
+  "version": "1.0.0",
+  "description": "AI-powered SEO automation: 40+ tools for auditing, fixing, and growing organic traffic. Auto-fix engine, multilingual intelligence, drift monitoring, AI readiness scoring.",
+  "author": "Vadim Cociug",
+  "homepage": "https://github.com/vadimc/ySEO-PRO-AI",
+  "license": "MIT",
+  "skills": ["src/skill/SKILL.md"],
+  "agents": ["src/crew/"]
+}
