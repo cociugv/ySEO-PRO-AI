@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-1.0-blue.svg)](https://modelcontextprotocol.io)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
+[![Tests](https://img.shields.io/badge/Tests-113%20passed-green.svg)](#testing)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 
 ---
@@ -198,6 +198,30 @@ GSC_CREDENTIALS_JSON=optional
 | **Publisher** | Content publishing | Blog API + IndexNow ping |
 | **Radar** | Competitor intel | Compare + backlink opportunities |
 | **Citadel** | Schema + AI readiness | Auto-inject + scoring |
+
+---
+
+## Testing
+
+```bash
+# Run full test suite (113 tests)
+python -m pytest tests/ -v
+
+# Run only benchmark fixtures
+python -m pytest tests/test_benchmark.py -v
+
+# Run specific module tests
+python -m pytest tests/test_remediation.py -v
+```
+
+Test coverage:
+- **Parser**: 21 tests (extraction, broken HTML, serialization)
+- **Pipeline**: 13 tests (stages, execution, scoring, hooks)
+- **Doctor**: 9 tests (fix status honesty, generation, artifacts)
+- **Modules**: 22 tests (hreflang, drift, architect, radar, citadel)
+- **Operations**: 8 tests (deep module, typed records)
+- **Remediation**: 18 tests (state machine, file adapter, integration)
+- **Benchmark**: 22 tests (precision/recall against HTML fixtures)
 
 ---
 

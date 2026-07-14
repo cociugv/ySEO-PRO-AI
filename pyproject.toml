@@ -1,0 +1,28 @@
+[project]
+name = "yseo-pro-ai"
+version = "0.1.0"
+description = "AI-powered SEO automation that audits, fixes, and grows organic traffic."
+authors = [{name = "Vadim Cociug", email = "vadim@ylink.pro"}]
+license = {text = "MIT"}
+requires-python = ">=3.10"
+readme = "README.md"
+keywords = ["seo", "mcp", "ai", "automation", "audit", "multilingual"]
+
+[project.urls]
+Homepage = "https://github.com/cociugv/ySEO-PRO-AI"
+Repository = "https://github.com/cociugv/ySEO-PRO-AI"
+Issues = "https://github.com/cociugv/ySEO-PRO-AI/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
