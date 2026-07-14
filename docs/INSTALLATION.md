@@ -40,7 +40,7 @@ The project includes `.kiro/steering/seo-automation.md` — just open the projec
 ### From Source (Development)
 
 ```bash
-git clone https://github.com/vadimc/ySEO-PRO-AI.git
+git clone https://github.com/cociugv/ySEO-PRO-AI.git
 cd ySEO-PRO-AI
 npm install
 python install.py

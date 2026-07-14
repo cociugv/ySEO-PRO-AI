@@ -2,7 +2,7 @@
 
 **The open-source SEO automation platform that doesn't just audit — it fixes.**
 
-40+ MCP tools for technical SEO, content optimization, multilingual intelligence, drift monitoring, AI search readiness, and programmatic page generation. Works with Claude, Cursor, Codex, Gemini, Windsurf, and any MCP client.
+11 real MCP tools for technical SEO, auto-fixing, multilingual intelligence, drift monitoring, AI search readiness, and competitive analysis. Works with Claude, Cursor, Codex, Gemini, Windsurf, and any MCP client.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-1.0-blue.svg)](https://modelcontextprotocol.io)
@@ -53,36 +53,30 @@ Then ask your AI assistant: *"Audit https://example.com for SEO issues and fix t
 
 ---
 
-## 40+ SEO Tools
+## MCP Tools (11 real implementations)
 
-### Audit & Fix
-- `seo_audit_page` — Full page audit (30+ checks)
-- `seo_audit_site` — Crawl and audit entire site
-- `seo_fix_auto` — **Auto-fix all fixable issues**
-- `seo_fix_meta` — Generate optimized meta tags
-- `seo_fix_schema` — Auto-inject schema markup
-- `seo_fix_robots` — Generate robots.txt
-- `seo_fix_sitemap` — Generate XML sitemap
-- `seo_fix_hreflang` — Generate hreflang tags
+### Audit
+- `seo_audit_page` — Full page audit (30+ checks, all modules)
+- `seo_check_indexability` — Robots, meta robots, canonical, X-Robots-Tag
 
-### AI & Content
-- `seo_score_ai_readiness` — AI Search Readiness (0-100)
-- `seo_content_brief` — SEO content briefs
-- `seo_content_optimize` — Optimize existing content
-- `seo_programmatic_pages` — Generate pages at scale
+### Auto-Fix
+- `seo_fix_auto` — Fix all fixable issues (with dry-run support)
+- `seo_fix_schema` — Auto-detect page type + generate JSON-LD
+- `seo_fix_hreflang` — Generate complete hreflang tag set
 
-### Monitoring & Intelligence
-- `seo_monitor_baseline` — Capture SEO snapshot
-- `seo_monitor_compare` — Detect regressions
-- `seo_competitor_compare` — Compare vs competitors
-- `seo_backlink_opportunities` — Find link targets
+### Analysis
+- `seo_score_ai_readiness` — AI Search Readiness Score (0-100)
 
-### Publishing & Indexing
-- `seo_indexnow_ping` — Instant index notification
-- `seo_publish_post` — Auto-publish + ping
-- `seo_sitemap_submit` — Submit to search engines
+### Monitoring
+- `seo_monitor_baseline` — Capture SEO state snapshot
+- `seo_monitor_compare` — Detect drift vs baseline
 
-[See all 40+ tools →](docs/TOOLS.md)
+### Competitor Intelligence
+- `seo_competitor_compare` — Side-by-side comparison
+- `seo_backlink_opportunities` — Find link building targets
+
+### Publishing
+- `seo_indexnow_ping` — Notify search engines instantly (batch support)
 
 ---
 
@@ -96,7 +90,7 @@ Then ask your AI assistant: *"Audit https://example.com for SEO issues and fix t
                          │ stdio (MCP Protocol)
 ┌────────────────────────▼────────────────────────────────┐
 │              TypeScript MCP Server                       │
-│         40+ tools · Zod validation · Resources          │
+│         11 tools · Zod validation · Deep adapter         │
 └────────────────────────┬────────────────────────────────┘
                          │ subprocess bridge
 ┌────────────────────────▼────────────────────────────────┐

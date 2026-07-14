@@ -5,7 +5,7 @@ We welcome contributions! Here's how to get started.
 ## Quick Start
 
 ```bash
-git clone https://github.com/vadimc/ySEO-PRO-AI.git
+git clone https://github.com/cociugv/ySEO-PRO-AI.git
 cd ySEO-PRO-AI
 npm install
 python test_quick.py   # Verify Python engine
