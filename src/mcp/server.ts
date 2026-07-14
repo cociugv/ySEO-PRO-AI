@@ -1,12 +1,11 @@
 /**
  * ySEO-PRO-AI — MCP Server
  *
- * A Model Context Protocol server providing 40+ SEO tools.
+ * Model Context Protocol server providing SEO tools with real implementations.
  * Compatible with: Claude Desktop, Claude Code, Cursor, Codex, Gemini, Windsurf.
  *
- * Architecture:
- * - Tools: Individual SEO operations (audit, fix, analyze, generate)
- * - Resources: SEO data sources (snapshots, configs, reports)
+ * Tools are registered only when they have a dedicated backend implementation.
+ * Interface = behavior — no false contracts.
  *
  * @author Vadim Cociug <vadim@ylink.pro>
  * @license MIT
@@ -14,43 +13,31 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 
-// Import tool handlers
 import { registerAuditTools } from "./tools/audit.js";
 import { registerFixTools } from "./tools/fix.js";
 import { registerAnalyzeTools } from "./tools/analyze.js";
 import { registerMonitorTools } from "./tools/monitor.js";
-import { registerContentTools } from "./tools/content.js";
-import { registerSchemaTools } from "./tools/schema.js";
-import { registerMultilingualTools } from "./tools/multilingual.js";
-import { registerPerformanceTools } from "./tools/performance.js";
 import { registerCompetitorTools } from "./tools/competitor.js";
 import { registerPublishTools } from "./tools/publish.js";
 
-// Create server instance
 const server = new McpServer({
   name: "yseo-pro-ai",
   version: "1.0.0",
 });
 
-// Register all tool groups
-registerAuditTools(server);
-registerFixTools(server);
-registerAnalyzeTools(server);
-registerMonitorTools(server);
-registerContentTools(server);
-registerSchemaTools(server);
-registerMultilingualTools(server);
-registerPerformanceTools(server);
-registerCompetitorTools(server);
-registerPublishTools(server);
+// Only tools with real, dedicated implementations
+registerAuditTools(server);       // seo_audit_page, seo_check_indexability
+registerFixTools(server);         // seo_fix_auto, seo_fix_schema, seo_fix_hreflang
+registerAnalyzeTools(server);     // seo_score_ai_readiness
+registerMonitorTools(server);     // seo_monitor_baseline, seo_monitor_compare
+registerCompetitorTools(server);  // seo_competitor_compare, seo_backlink_opportunities
+registerPublishTools(server);     // seo_indexnow_ping
 
-// Start server with stdio transport
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("ySEO-PRO-AI MCP server running on stdio");
+  console.error("ySEO-PRO-AI MCP server running (11 tools)");
 }
 
 main().catch((error) => {

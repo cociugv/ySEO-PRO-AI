@@ -1,9 +1,10 @@
 """
-Prescriptions Registry — Maps issue codes to fix strategies.
+Prescriptions — Legacy compatibility module.
 
-Re-exported from fixer.py for standalone usage.
+Fix logic is now inside AutoFixer (generate/apply/verify pattern).
+This module provides the legacy get_prescription for backward compat.
 """
 
-from .fixer import get_prescription, Prescription
+from .fixer import get_prescription
 
-__all__ = ["get_prescription", "Prescription"]
+__all__ = ["get_prescription"]

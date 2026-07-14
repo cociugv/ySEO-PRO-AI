@@ -41,11 +41,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vadimc/ySEO-PRO-AI"
+    "url": "https://github.com/cociugv/ySEO-PRO-AI"
   },
-  "homepage": "https://ylink.pro/yseo",
+  "homepage": "https://github.com/cociugv/ySEO-PRO-AI",
   "bugs": {
-    "url": "https://github.com/vadimc/ySEO-PRO-AI/issues"
+    "url": "https://github.com/cociugv/ySEO-PRO-AI/issues"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -16,7 +16,6 @@ Each fix is:
 3. Verified after application
 """
 
-from .fixer import AutoFixer
-from .prescriptions import get_prescription
+from .fixer import AutoFixer, FixArtifact, FixStatus
 
-__all__ = ["AutoFixer", "get_prescription"]
+__all__ = ["AutoFixer", "FixArtifact", "FixStatus"]

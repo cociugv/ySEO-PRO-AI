@@ -44,7 +44,7 @@
 ### Install from Source
 
 ```bash
-git clone https://github.com/vadimc/ySEO-PRO-AI.git
+git clone https://github.com/cociugv/ySEO-PRO-AI.git
 cd ySEO-PRO-AI
 npm install
 ```
@@ -222,7 +222,7 @@ Key areas:
 
 ## License
 
-MIT License — [Vadim Cociug](https://github.com/vadimc)
+MIT License — [Vadim Cociug](https://github.com/cociugv)
 
 ---
 

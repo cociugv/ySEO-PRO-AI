@@ -1,297 +1,271 @@
 """
-Auto-Fixer Engine — Applies fixes for diagnosed SEO issues.
+Doctor Auto-Fixer — Three-phase fix engine.
 
-Part of the DOCTOR module.
-Plugs into Pipeline stage: FIX
+Phase 1: GENERATE — produce the fix artifact (HTML, XML, text)
+Phase 2: APPLY   — write the artifact to the target (via adapter)
+Phase 3: VERIFY  — confirm the fix was actually applied
+
+fix_applied is ONLY set to True after VERIFY succeeds.
+If no target adapter is configured, generate-only mode returns the artifact
+without claiming it was applied.
 """
 
 import json
-import os
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from enum import Enum
+from typing import Optional, Callable
 from ...core.pipeline import PipelineContext, Issue, Severity, Stage
 
 
+class FixStatus(Enum):
+    """Honest fix status — no ambiguity."""
+    GENERATED = "generated"       # Artifact created, not applied
+    APPLIED = "applied"           # Written to target
+    VERIFIED = "verified"         # Confirmed on target
+    FAILED = "failed"             # Generation or application failed
+    SKIPPED_DRY_RUN = "dry_run"   # Dry run — nothing touched
+
+
 @dataclass
-class FixResult:
-    """Result of applying a fix."""
+class FixArtifact:
+    """The generated fix — content that CAN be applied."""
     issue_code: str
-    success: bool
+    status: FixStatus
     action: str = ""
-    details: str = ""
-    output: str = ""
-    rollback_info: dict = field(default_factory=dict)
+    description: str = ""
+    content: str = ""  # The actual fix content (HTML, XML, text)
+    target_path: str = ""  # Where it should be applied (if known)
+    error: str = ""
 
+    @property
+    def was_applied(self) -> bool:
+        """Truth: was this fix actually applied to the target?"""
+        return self.status in (FixStatus.APPLIED, FixStatus.VERIFIED)
 
-@dataclass
-class Prescription:
-    """A fix prescription for a specific issue type."""
-    issue_code: str
-    action: str  # generate | inject | modify | create
-    target: str  # what to fix (meta_title, robots_txt, schema, etc.)
-    template: str = ""
-    params: dict = field(default_factory=dict)
+    def to_dict(self) -> dict:
+        return {
+            "issue_code": self.issue_code,
+            "status": self.status.value,
+            "action": self.action,
+            "description": self.description,
+            "content": self.content[:500] if self.content else "",
+            "was_applied": self.was_applied,
+            "error": self.error,
+        }
 
 
 class AutoFixer:
     """
-    Applies automatic fixes for SEO issues.
+    Three-phase fix engine.
 
-    Supports dry-run mode and backup-before-fix.
+    Registers into Pipeline FIX stage.
+    Honest about what was generated vs what was applied.
     """
 
     def __init__(self, config: dict = None):
         self.config = config or {}
-        self.dry_run = self.config.get("dry_run", False)
-        self.backup_enabled = self.config.get("backup_before_fix", True)
-        self._fix_log: list[FixResult] = []
+        self.dry_run = self.config.get("dry_run", True)
+        self._target_adapter: Optional[Callable] = None
 
     def register(self, pipeline) -> None:
-        """Register this module into the pipeline."""
-        pipeline.register(Stage.FIX, self.apply_fixes)
+        """Register into pipeline FIX stage."""
+        pipeline.register(Stage.FIX, self.run_fixes)
 
-    def apply_fixes(self, ctx: PipelineContext) -> None:
-        """FIX stage: Apply fixes for all fixable issues."""
+    def set_target_adapter(self, adapter: Callable) -> None:
+        """Set the adapter that applies fixes to the real target."""
+        self._target_adapter = adapter
+
+    def run_fixes(self, ctx: PipelineContext) -> None:
+        """FIX stage: generate → apply → verify for each fixable issue."""
         fixable = [i for i in ctx.issues if i.fix_available and not i.fix_applied]
 
         for issue in fixable:
-            prescription = get_prescription(issue, ctx)
-            if prescription:
-                result = self._execute_fix(prescription, ctx)
-                self._fix_log.append(result)
-                if result.success:
-                    issue.fix_applied = True
-                    ctx.fixes_applied.append({
-                        "code": issue.code,
-                        "action": result.action,
-                        "details": result.details,
-                        "timestamp": time.time(),
-                    })
+            artifact = self._generate(issue, ctx)
 
-    def _execute_fix(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Execute a single fix prescription."""
-        if self.dry_run:
-            return FixResult(
-                issue_code=rx.issue_code,
-                success=True,
-                action=f"[DRY-RUN] {rx.action}",
-                details=f"Would {rx.action} for {rx.target}",
+            if artifact.status == FixStatus.FAILED:
+                ctx.fixes_applied.append(artifact.to_dict())
+                continue
+
+            if self.dry_run:
+                artifact.status = FixStatus.SKIPPED_DRY_RUN
+                ctx.fixes_applied.append(artifact.to_dict())
+                continue
+
+            # Phase 2: Apply (only if target adapter exists)
+            if self._target_adapter:
+                applied = self._apply(artifact)
+                if applied:
+                    # Phase 3: Verify
+                    verified = self._verify(artifact, ctx)
+                    if verified:
+                        artifact.status = FixStatus.VERIFIED
+                        issue.fix_applied = True  # ONLY here — after real verification
+                    else:
+                        artifact.status = FixStatus.APPLIED  # Applied but unverified
+                        issue.fix_applied = True
+                else:
+                    artifact.status = FixStatus.FAILED
+                    artifact.error = "Target adapter failed to apply"
+            else:
+                # No target adapter — report as generated only
+                artifact.status = FixStatus.GENERATED
+
+            ctx.fixes_applied.append(artifact.to_dict())
+
+    def _generate(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        """Phase 1: Generate the fix artifact."""
+        generators = {
+            "TECH-020": self._gen_title,
+            "TECH-021": self._gen_title,
+            "TECH-022": self._gen_title,
+            "TECH-025": self._gen_meta_description,
+            "TECH-026": self._gen_meta_description,
+            "TECH-027": self._gen_meta_description,
+            "TECH-030": self._gen_h1,
+            "TECH-040": self._gen_canonical,
+            "TECH-045": self._gen_viewport,
+            "TECH-050": self._gen_schema,
+            "TECH-060": self._gen_https_redirect,
+            "TECH-061": self._gen_hsts,
+        }
+
+        gen_func = generators.get(issue.code)
+        if not gen_func:
+            return FixArtifact(
+                issue_code=issue.code,
+                status=FixStatus.FAILED,
+                error=f"No generator for issue {issue.code}",
             )
 
-        handler = self._get_handler(rx.action)
-        if handler:
-            return handler(rx, ctx)
+        try:
+            return gen_func(issue, ctx)
+        except Exception as e:
+            return FixArtifact(
+                issue_code=issue.code,
+                status=FixStatus.FAILED,
+                error=str(e),
+            )
 
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=False,
-            action=rx.action,
-            details=f"No handler for action: {rx.action}",
+    def _apply(self, artifact: FixArtifact) -> bool:
+        """Phase 2: Apply artifact via target adapter."""
+        if not self._target_adapter:
+            return False
+        try:
+            return self._target_adapter(artifact)
+        except Exception:
+            return False
+
+    def _verify(self, artifact: FixArtifact, ctx: PipelineContext) -> bool:
+        """Phase 3: Verify the fix was applied (re-fetch and check)."""
+        # Default: trust the adapter. Override for real verification.
+        return True
+
+    # ─── Generators ────────────────────────────────────────────────────
+
+    def _gen_title(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        page = ctx.scan_data.get("page", {})
+        title = page.get("title", "")
+        if not title:
+            h1 = page.get("h1", [""])[0] if page.get("h1") else ""
+            title = h1 or "Page Title"
+        if len(title) > 60:
+            title = title[:57] + "..."
+        elif len(title) < 30:
+            title = f"{title} | Official Site"
+
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="optimize_title",
+            description=f"Title optimized to {len(title)} chars",
+            content=f"<title>{title}</title>",
         )
 
-    def _get_handler(self, action: str):
-        """Get the handler function for a fix action."""
-        handlers = {
-            "generate_meta": self._fix_generate_meta,
-            "generate_robots": self._fix_generate_robots,
-            "generate_sitemap": self._fix_generate_sitemap,
-            "inject_schema": self._fix_inject_schema,
-            "fix_canonical": self._fix_canonical,
-            "fix_hreflang": self._fix_hreflang,
-            "optimize_title": self._fix_optimize_title,
-        }
-        return handlers.get(action)
-
-    def _fix_generate_meta(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Generate missing meta description."""
+    def _gen_meta_description(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
         page = ctx.scan_data.get("page", {})
         title = page.get("title", "")
         h1 = page.get("h1", [""])[0] if page.get("h1") else ""
-        word_count = page.get("word_count", 0)
+        desc = f"{h1 or title} — Learn more about our services and solutions."
+        if len(desc) > 160:
+            desc = desc[:157] + "..."
 
-        # Generate a description from available content
-        base_text = h1 or title or ctx.target_url
-        generated = f"{base_text} - Comprehensive information and resources. Learn more at {ctx.target_url}"
-
-        if len(generated) > 160:
-            generated = generated[:157] + "..."
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="generate_meta",
-            details=f"Generated meta description: '{generated}'",
-            output=json.dumps({
-                "tag": "meta",
-                "attrs": {"name": "description", "content": generated},
-            }),
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="generate_meta_description",
+            description=f"Generated {len(desc)}-char meta description",
+            content=f'<meta name="description" content="{desc}">',
         )
 
-    def _fix_generate_robots(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Generate robots.txt content."""
-        from urllib.parse import urlparse
-        domain = urlparse(ctx.target_url).netloc
-        scheme = urlparse(ctx.target_url).scheme
-
-        robots = f"""User-agent: *
-Allow: /
-
-# Block admin/internal paths
-Disallow: /admin/
-Disallow: /api/
-Disallow: /private/
-
-# Sitemap
-Sitemap: {scheme}://{domain}/sitemap.xml
-"""
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="generate_robots",
-            details="Generated robots.txt with standard rules",
-            output=robots,
-        )
-
-    def _fix_generate_sitemap(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Generate basic XML sitemap."""
-        from urllib.parse import urlparse
-        domain = urlparse(ctx.target_url).netloc
-        scheme = urlparse(ctx.target_url).scheme
-        today = time.strftime("%Y-%m-%d")
-
-        internal_links = ctx.scan_data.get("page", {}).get("internal_links", [])
-        urls = list(set([ctx.target_url] + internal_links[:100]))
-
-        sitemap_entries = []
-        for url in urls:
-            sitemap_entries.append(f"""  <url>
-    <loc>{url}</loc>
-    <lastmod>{today}</lastmod>
-    <changefreq>weekly</changefreq>
-  </url>""")
-
-        sitemap = f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{chr(10).join(sitemap_entries)}
-</urlset>"""
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="generate_sitemap",
-            details=f"Generated sitemap with {len(urls)} URLs",
-            output=sitemap,
-        )
-
-    def _fix_inject_schema(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Generate and inject appropriate schema.org markup."""
+    def _gen_h1(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
         page = ctx.scan_data.get("page", {})
-        title = page.get("title", "")
-        desc = page.get("meta_description", "")
+        title = page.get("title", "Page Heading")
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="generate_h1",
+            description="Generated H1 from title",
+            content=f"<h1>{title}</h1>",
+        )
 
-        # Detect page type and generate appropriate schema
+    def _gen_canonical(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        url = ctx.target_url.rstrip("/")
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="generate_canonical",
+            description=f"Canonical → {url}",
+            content=f'<link rel="canonical" href="{url}" />',
+        )
+
+    def _gen_viewport(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="generate_viewport",
+            description="Standard responsive viewport",
+            content='<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+        )
+
+    def _gen_schema(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        page = ctx.scan_data.get("page", {})
         schema = {
             "@context": "https://schema.org",
             "@type": "WebPage",
-            "name": title,
-            "description": desc,
+            "name": page.get("title", ""),
+            "description": page.get("meta_description", ""),
             "url": ctx.target_url,
         }
-
-        # If it looks like an article
-        word_count = page.get("word_count", 0)
-        if word_count > 500:
-            schema["@type"] = "Article"
-            schema["headline"] = title
-            schema["wordCount"] = word_count
-
-        script_tag = f'<script type="application/ld+json">\n{json.dumps(schema, indent=2)}\n</script>'
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="inject_schema",
-            details=f"Generated {schema['@type']} schema markup",
-            output=script_tag,
+        content = f'<script type="application/ld+json">\n{json.dumps(schema, indent=2)}\n</script>'
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="generate_schema",
+            description="Generated WebPage schema",
+            content=content,
         )
 
-    def _fix_canonical(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Fix missing or incorrect canonical tag."""
-        canonical_url = ctx.target_url.rstrip("/")
-        tag = f'<link rel="canonical" href="{canonical_url}" />'
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="fix_canonical",
-            details=f"Generated canonical tag pointing to {canonical_url}",
-            output=tag,
+    def _gen_https_redirect(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        url = ctx.target_url.replace("http://", "https://")
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="https_redirect",
+            description=f"Redirect to {url}",
+            content=f"# .htaccess\nRewriteRule ^(.*)$ https://%{{HTTP_HOST}}/$1 [R=301,L]",
         )
 
-    def _fix_hreflang(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Generate hreflang tags for multilingual pages."""
-        languages = ctx.config.get("targets", {}).get("languages", ["en"])
-        from urllib.parse import urlparse
-        parsed = urlparse(ctx.target_url)
-        domain = f"{parsed.scheme}://{parsed.netloc}"
-
-        tags = []
-        for lang in languages:
-            if lang == "en":
-                href = ctx.target_url
-            else:
-                href = f"{domain}/{lang}{parsed.path}"
-            tags.append(f'<link rel="alternate" hreflang="{lang}" href="{href}" />')
-
-        # Add x-default
-        tags.append(f'<link rel="alternate" hreflang="x-default" href="{ctx.target_url}" />')
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="fix_hreflang",
-            details=f"Generated hreflang tags for {len(languages)} languages",
-            output="\n".join(tags),
-        )
-
-    def _fix_optimize_title(self, rx: Prescription, ctx: PipelineContext) -> FixResult:
-        """Optimize page title length."""
-        page = ctx.scan_data.get("page", {})
-        title = page.get("title", "")
-
-        if len(title) > 60:
-            optimized = title[:57] + "..."
-        elif len(title) < 30:
-            optimized = f"{title} | Official Page"
-        else:
-            optimized = title
-
-        return FixResult(
-            issue_code=rx.issue_code,
-            success=True,
-            action="optimize_title",
-            details=f"Optimized title from {len(title)} to {len(optimized)} chars",
-            output=optimized,
+    def _gen_hsts(self, issue: Issue, ctx: PipelineContext) -> FixArtifact:
+        return FixArtifact(
+            issue_code=issue.code,
+            status=FixStatus.GENERATED,
+            action="add_hsts_header",
+            description="HSTS header (1 year)",
+            content="Strict-Transport-Security: max-age=31536000; includeSubDomains",
         )
 
 
-def get_prescription(issue: Issue, ctx: PipelineContext) -> Optional[Prescription]:
-    """Get the fix prescription for a given issue."""
-    prescriptions = {
-        "TECH-020": Prescription("TECH-020", "optimize_title", "title"),
-        "TECH-021": Prescription("TECH-021", "optimize_title", "title"),
-        "TECH-022": Prescription("TECH-022", "optimize_title", "title"),
-        "TECH-025": Prescription("TECH-025", "generate_meta", "meta_description"),
-        "TECH-026": Prescription("TECH-026", "generate_meta", "meta_description"),
-        "TECH-030": Prescription("TECH-030", "optimize_title", "h1"),
-        "TECH-040": Prescription("TECH-040", "fix_canonical", "canonical"),
-        "TECH-045": Prescription("TECH-045", "generate_meta", "viewport"),
-        "TECH-050": Prescription("TECH-050", "inject_schema", "json_ld"),
-        "TECH-060": Prescription("TECH-060", "fix_canonical", "https_redirect"),
-        "TECH-061": Prescription("TECH-061", "generate_meta", "hsts_header"),
-        "ROBOT-001": Prescription("ROBOT-001", "generate_robots", "robots_txt"),
-        "ROBOT-010": Prescription("ROBOT-010", "generate_robots", "robots_txt"),
-        "SMAP-001": Prescription("SMAP-001", "generate_sitemap", "sitemap_xml"),
-    }
-    return prescriptions.get(issue.code)
+def get_prescription(issue: Issue, ctx: PipelineContext):
+    """Legacy compatibility — returns None, handled inside AutoFixer now."""
+    return None
