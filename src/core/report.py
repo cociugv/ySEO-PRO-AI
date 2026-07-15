@@ -85,7 +85,7 @@ def generate_html_report(
                 <div class="stat"><span class="label">Words</span><span class="value">{page.get('word_count',0)}</span></div>
                 <div class="stat"><span class="label">Internal Links</span><span class="value">{page.get('internal_links_count',0)}</span></div>
                 <div class="stat"><span class="label">Schema</span><span class="value">{page.get('json_ld_count',0)}</span></div>
-                <div class="stat"><span class="label">Hreflang</span><span class="value">{len(page.get('hreflang_tags',page.get('hreflang_count',0) if isinstance(page.get('hreflang_count'),int) else []))}</span></div>
+                <div class="stat"><span class="label">Hreflang</span><span class="value">{page.get('hreflang_count', len(page.get('hreflang_tags', [])) if isinstance(page.get('hreflang_tags'), list) else 0)}</span></div>
             </div>
         </section>"""
 

@@ -12,6 +12,7 @@ reports/*.json
 reports/*.html
 .yseo/cache/
 .yseo/snapshots/
+.yseo/crawls/
 *.log
 dist/
 build/
