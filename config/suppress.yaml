@@ -1,0 +1,24 @@
+# ySEO-PRO-AI — Rule Suppression Config
+#
+# Suppress specific findings when they are intentional.
+# Copy this to .yseo/suppress.yaml for project-specific suppressions.
+#
+# Format:
+#   suppress:
+#     - rule: <ISSUE_CODE>
+#       reason: "Why this is suppressed"
+#       urls: []  # optional — empty means all URLs
+
+suppress: []
+
+# Examples (uncomment to use):
+#
+#  - rule: TECH-027
+#    reason: "Meta description intentionally long for brand visibility"
+#
+#  - rule: TECH-061
+#    reason: "HSTS is set at CDN/load balancer level, not visible in response"
+#
+#  - rule: IMG-001
+#    urls: ["https://example.com/landing"]
+#    reason: "Hero images are decorative, alt intentionally empty"

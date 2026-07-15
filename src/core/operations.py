@@ -98,6 +98,11 @@ class SEOOperations:
         from ..modules.inspector.checks import run_all_checks
         run_all_checks(ctx)
 
+        # Apply suppressions
+        from .suppress import apply_suppressions
+        active_issues, suppressed = apply_suppressions(ctx.issues, self._project_root)
+        ctx.issues = active_issues
+
         return OperationResult(
             success=len(ctx.errors) == 0,
             url=url, operation="audit", score=ctx.score,
@@ -105,6 +110,7 @@ class SEOOperations:
             data={
                 "page": ctx.scan_data.get("page", {}),
                 "ai_readiness": ctx.scan_data.get("ai_readiness", {}),
+                "suppressed_count": len(suppressed),
             },
             errors=ctx.errors,
             elapsed_seconds=time.time() - start,
